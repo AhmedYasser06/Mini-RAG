@@ -30,7 +30,7 @@ async def upload_data(project_id: str, file: UploadFile, app_settings: Settings 
         
     
     project_dir_path = ProjectController().get_project_path(project_id=project_id)
-    file_path = data_controller.generate_unique_filename(original_filename=file.filename, project_id=project_id)
+    file_path, file_id = data_controller.generate_unique_filepath(original_filename=file.filename, project_id=project_id)
     
     try:
         async with aiofiles.open(file_path, 'wb') as f:
@@ -48,5 +48,8 @@ async def upload_data(project_id: str, file: UploadFile, app_settings: Settings 
         
         
     return JSONResponse(
-        content={"signal": ResponseSignal.FILE_UPLOADED_SUCCESS.value}
+            content={
+                "signal": ResponseSignal.FILE_UPLOADED_SUCCESS.value,
+                "file_id": file_id
+                }
     )
