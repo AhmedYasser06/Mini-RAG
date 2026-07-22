@@ -1,3 +1,5 @@
+from models.db_schemes.project import Project
+
 from .BaseDataModel import BaseDataModel
 from .db_schemes import DataChunk
 from .enums.DataBaseEnum import DataBaseEnum
@@ -8,7 +10,25 @@ class ChunkModel(BaseDataModel):
     def __init__(self, db_client: object):
         super().__init__(db_client=db_client) 
         self.collection = self.db_client[DataBaseEnum.COLLECTION_CHUNK_NAME.value]
-        
+
+    @classmethod
+    async def create_instance(cls, db_client: object):
+        instance = cls(db_client=db_client)
+        await instance.init_collection()
+        return instance    
+    
+    async def init_collection(self):
+        self.collection = self.db_client[DataBaseEnum.COLLECTION_CHUNK_NAME.value]
+
+        indexes = DataChunk.get_indexes()
+
+        for index in indexes:
+            await self.collection.create_index(
+                index["key"],
+                name=index["name"],
+                unique=index["unique"],
+            )
+ 
     async def create_chunk(self, chunk: DataChunk):
         result = await self.collection.insert_one(chunk.model_dump(by_alias=True, exclude_unset=True))
         chunk.id = result.inserted_id

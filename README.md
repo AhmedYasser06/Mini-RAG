@@ -56,6 +56,17 @@ $ cd docker
 $ sudo docker compose up -d
 ```
 
+## remove all docker attachements while developing
+
+```bash
+$ cd docker
+$ sudo docker stop $(sudo docker ps -aq)
+$ sudo docker rm $(sudo docker ps -aq)
+$ sudo docker rmi $(sudo docker images -q)
+$ sudo docker volume rm $(sudo docker volume ls -q)
+$ sudo docker system prune --all  the yes
+```
+
 ## Run the FastAPI server
 
 ```bash
