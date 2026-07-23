@@ -24,7 +24,7 @@ class Project(BaseModel):
             {
                 
                 "key": [
-                  ("project_id", 1)
+                  ("project_id", 1) # 1 => ascending order, -1 => descending order
                 ],
                 "name": "project_id_index_1",
                 "unique": True
