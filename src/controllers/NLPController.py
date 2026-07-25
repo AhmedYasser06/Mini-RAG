@@ -40,12 +40,23 @@ class NLPController(BaseController):
         # step2: manage items
         texts = [ c.chunk_text for c in chunks ]
         metadata = [ c.chunk_metadata for c in  chunks]
-        vectors = [
-            self.embedding_client.embed_text(text=text, 
-                                             document_type=DocumentTypeEnums.DOCUMENT.value)
-            for text in texts
-        ]
+        def chunk_list(lst, size=90):
+            for i in range(0, len(lst), size):
+                yield lst[i:i + size]
 
+        vectors = []
+        for batch in chunk_list(texts, size=90):
+            batch_vectors = self.embedding_client.embed_text(
+                text=batch,
+                document_type=DocumentTypeEnums.DOCUMENT.value,
+            )
+            
+            if not batch_vectors:
+                print(f"Failed to get embeddings for a batch in project {project.project_id}")
+                return False
+            
+            vectors.extend(batch_vectors)
+    
         # step3: create collection if not exists
         _ = self.vectordb_client.create_collection(
             collection_name=collection_name,

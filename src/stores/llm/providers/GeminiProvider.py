@@ -1,9 +1,10 @@
 from google import genai
 from google.genai import types
 import logging
+import time
 
 from ..LLMInterface import LLMInterface
-from ..LLMEnums import GeminiEnums, DocumentTypeEnum
+from ..LLMEnums import GeminiEnums, DocumentTypeEnums
 
 
 class GeminiProvider(LLMInterface):
@@ -89,24 +90,34 @@ class GeminiProvider(LLMInterface):
             return None
 
         task_type = "RETRIEVAL_DOCUMENT"
-        if document_type == DocumentTypeEnum.QUERY.value:
+        if document_type == DocumentTypeEnums.QUERY.value:
             task_type = "RETRIEVAL_QUERY"
 
         is_batch = isinstance(text, list)
         texts = text if is_batch else [text]
         texts = [self.process_text(t) for t in texts]
-
-        try:
-            result = self.client.models.embed_content(
-                model=self.embedding_model_id,
-                contents=texts,
-                config=types.EmbedContentConfig(
-                    task_type=task_type,
-                    output_dimensionality=self.embedding_size,
-                ),
-            )
-        except Exception as e:
-            self.logger.error(f"Error while embedding text with Gemini: {e}")
+        
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                result = self.client.models.embed_content(
+                    model=self.embedding_model_id,
+                    contents=texts,
+                    config=types.EmbedContentConfig(
+                        task_type=task_type,
+                        output_dimensionality=self.embedding_size,
+                    ),
+                )
+                break
+            except Exception as e:
+                if "RESOURCE_EXHAUSTED" in str(e) and attempt < max_retries - 1:
+                    wait_time = 20 * (attempt + 1)  # 20s, then 40s
+                    self.logger.warning(f"Rate limited, waiting {wait_time}s before retry...")
+                    time.sleep(wait_time)
+                    continue
+                self.logger.error(f"Error while embedding text with Gemini: {e}")
+                return None
+        else:
             return None
 
         if not result or not result.embeddings:
