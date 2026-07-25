@@ -12,7 +12,7 @@ class VectorDBInterface(ABC):
         pass
     
     @abstractmethod
-    def is_collection_exists(self, collection_name: str) -> bool:
+    def is_collection_existed(self, collection_name: str) -> bool:
         pass
     
     @abstractmethod
