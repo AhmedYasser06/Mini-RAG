@@ -24,6 +24,8 @@ class GeminiProvider(LLMInterface):
         self.embedding_size = None
 
         self.client = genai.Client(api_key=self.api_key)
+        
+        self.enums = GeminiEnums
         self.logger = logging.getLogger(__name__)
 
     def set_generation_model(self, model_id: str):
@@ -58,7 +60,7 @@ class GeminiProvider(LLMInterface):
         temperature = temperature if temperature is not None else self.default_generation_temperature
 
         # Gemini's `contents` can just be prior turns + the new prompt as plain strings/dicts
-        contents = list(chat_history) + [self.process_text(prompt)]
+        contents = self.process_text(prompt)
 
         try:
             response = self.client.models.generate_content(

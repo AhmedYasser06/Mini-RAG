@@ -100,7 +100,7 @@ class NLPController(BaseController):
         return results
     
     def answer_rag_question(self, project: Project, query: str, limit: int = 10):
-        
+              
         answer, full_prompt, chat_history = None, None, None
 
         # step1: retrieve related documents
@@ -131,7 +131,7 @@ class NLPController(BaseController):
             self.generation_client.construct_prompt(
                 prompt=system_prompt,
                 role=self.generation_client.enums.SYSTEM.value,
-            )
+            )   
         ]
 
         full_prompt = "\n\n".join([ documents_prompts,  footer_prompt])
