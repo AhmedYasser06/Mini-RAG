@@ -1,5 +1,5 @@
 from google import genai
-from google.genai import types
+from google.genai import types # import when using mini-rag-py310
 import logging
 import time
 
