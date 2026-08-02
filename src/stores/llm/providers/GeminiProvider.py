@@ -41,7 +41,7 @@ class GeminiProvider(LLMInterface):
     def construct_prompt(self, prompt: str, role: str):
         return {
             "role": GeminiEnums.ASSISTANT.value if role == "assistant" else GeminiEnums.USER.value,
-            "parts": [self.process_text(prompt)],
+            "parts": [prompt],
         }
 
     def generate_text(self, prompt: str, chat_history: list = [],
