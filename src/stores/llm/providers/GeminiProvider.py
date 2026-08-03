@@ -2,6 +2,7 @@ from google import genai
 from google.genai import types # import when using mini-rag-py310
 import logging
 import time
+from typing import List, Union
 
 from ..LLMInterface import LLMInterface
 from ..LLMEnums import GeminiEnums, DocumentTypeEnums
@@ -81,12 +82,17 @@ class GeminiProvider(LLMInterface):
 
         return response.text
 
-    def embed_text(self, text: str, document_type: str = None):
+    def embed_text(self, text: Union[str, List[str]], document_type: str = None):
 
         if not self.client:
             self.logger.error("Gemini client was not set")
             return None
 
+        single_input = isinstance(text, str)
+
+        if single_input:
+            text = [text]
+        
         if not self.embedding_model_id:
             self.logger.error("Embedding model for Gemini was not set")
             return None
@@ -127,4 +133,4 @@ class GeminiProvider(LLMInterface):
             return None
 
         vectors = [e.values for e in result.embeddings]
-        return vectors if is_batch else vectors[0]
+        return vectors[0] if single_input else vectors

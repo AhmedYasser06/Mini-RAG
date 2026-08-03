@@ -21,5 +21,5 @@ class PgVectorDistanceMethodEnums(Enum):
     DOT = "vector_l2_ops"
 
 class PgVectorIndexTypeEnums(Enum):
-    HNSW = "hnsw"
-    IVFFLAT = "ivfflat"
+    HNSW = "hnsw"       # Hierarchical Navigable Small World
+    IVFFLAT = "ivfflat" # Inverted File with Flat quantization
