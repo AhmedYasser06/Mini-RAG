@@ -32,7 +32,6 @@ services:
       - backend
     restart: always
 
-
   # PostgreSQL (pgvector)
   pgvector:
     image: pgvector/pgvector:0.8.0-pg17
@@ -47,7 +46,7 @@ services:
       - backend
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -101,7 +100,6 @@ services:
       - backend
     restart: always
 
-
   # Node Exporter for system metrics
   node-exporter:
     image: prom/node-exporter:v1.9.1
@@ -113,10 +111,22 @@ services:
       - /sys:/host/sys:ro
       - /:/rootfs:ro
     command:
+      # - '--path.procfs=/host/proc'
+      # - '--path.rootfs=/rootfs'
+      # - '--path.sysfs=/host/sys'
+      # - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+
       - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
       - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--path.rootfs=/rootfs'
+
+      # Disable problematic collectors on WSL2
+      - '--no-collector.netstat'
+      - '--no-collector.softnet'
+
+      # Ignore duplicate mount points
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|run/user|mnt/wsl)($$|/)'
+
     networks:
       - backend
     restart: always
