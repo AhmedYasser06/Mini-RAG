@@ -37,6 +37,9 @@ class GeminiProvider(LLMInterface):
         self.embedding_size = embedding_size
 
     def process_text(self, text: str):
+        if not text:
+            return ""
+
         return text[:self.default_input_max_characters].strip()
 
     def construct_prompt(self, prompt: str, role: str):
@@ -82,55 +85,106 @@ class GeminiProvider(LLMInterface):
 
         return response.text
 
-    def embed_text(self, text: Union[str, List[str]], document_type: str = None):
-
+    def embed_text(
+        self,
+        text: Union[str, List[str]],
+        document_type: str = None
+    ):
         if not self.client:
             self.logger.error("Gemini client was not set")
             return None
 
-        single_input = isinstance(text, str)
-
-        if single_input:
-            text = [text]
-        
         if not self.embedding_model_id:
             self.logger.error("Embedding model for Gemini was not set")
             return None
 
+        single_input = isinstance(text, str)
+
+        # Normalize input to list
+        texts = [text] if single_input else text
+
+        if not texts:
+            self.logger.error("No text provided for embedding")
+            return None
+
+        # Clean and truncate texts
+        cleaned_texts = []
+
+        for i, t in enumerate(texts):
+            if t is None:
+                self.logger.warning(
+                    f"Skipping None text at index {i}"
+                )
+                continue
+
+            if not isinstance(t, str):
+                t = str(t)
+
+            t = self.process_text(t)
+
+            if not t:
+                self.logger.warning(
+                    f"Skipping empty text at index {i}"
+                )
+                continue
+
+            cleaned_texts.append(t)
+
+        if not cleaned_texts:
+            self.logger.error(
+                "No valid non-empty texts available for embedding"
+            )
+            return None
+
         task_type = "RETRIEVAL_DOCUMENT"
+
         if document_type == DocumentTypeEnums.QUERY.value:
             task_type = "RETRIEVAL_QUERY"
 
-        is_batch = isinstance(text, list)
-        texts = text if is_batch else [text]
-        texts = [self.process_text(t) for t in texts]
-        
         max_retries = 3
+
         for attempt in range(max_retries):
             try:
                 result = self.client.models.embed_content(
                     model=self.embedding_model_id,
-                    contents=texts,
+                    contents=cleaned_texts,
                     config=types.EmbedContentConfig(
                         task_type=task_type,
                         output_dimensionality=self.embedding_size,
                     ),
                 )
+
                 break
+
             except Exception as e:
-                if "RESOURCE_EXHAUSTED" in str(e) and attempt < max_retries - 1:
-                    wait_time = 20 * (attempt + 1)  # 20s, then 40s
-                    self.logger.warning(f"Rate limited, waiting {wait_time}s before retry...")
+                if (
+                    "RESOURCE_EXHAUSTED" in str(e)
+                    and attempt < max_retries - 1
+                ):
+                    wait_time = 20 * (attempt + 1)
+
+                    self.logger.warning(
+                        f"Rate limited, waiting "
+                        f"{wait_time}s before retry..."
+                    )
+
                     time.sleep(wait_time)
                     continue
-                self.logger.error(f"Error while embedding text with Gemini: {e}")
+
+                self.logger.error(
+                    f"Error while embedding text with Gemini: {e}"
+                )
                 return None
+
         else:
             return None
 
         if not result or not result.embeddings:
-            self.logger.error("No embeddings returned from Gemini")
+            self.logger.error(
+                "No embeddings returned from Gemini"
+            )
             return None
 
         vectors = [e.values for e in result.embeddings]
+
         return vectors[0] if single_input else vectors
