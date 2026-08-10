@@ -1,5 +1,4 @@
 from celery_app import celery_app, get_setup_utils
-from helpers.config import get_settings
 import asyncio
 from utils.idempotency_manager import IdempotencyManager
 

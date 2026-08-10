@@ -1,7 +1,5 @@
 from celery_app import celery_app, get_setup_utils
-from helpers.config import get_settings
 import asyncio
-from fastapi.responses import JSONResponse
 from models.ProjectModel import ProjectModel
 from models.ChunkModel import ChunkModel
 from controllers import NLPController

@@ -1,6 +1,5 @@
 from celery import chain
-from celery_app import celery_app, get_setup_utils
-from helpers.config import get_settings
+from celery_app import celery_app
 import asyncio
 from tasks.file_processing import process_project_files
 from tasks.data_indexing import _index_data_content
